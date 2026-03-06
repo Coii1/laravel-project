@@ -14,10 +14,7 @@ class IdeaController extends Controller
      */
     public function index()
     {
-                    
-        $ideas = Idea::query()->where([
-            'user_id' => Auth::id()
-        ])->get();                                                               //Illuminate\Database\Eloquent\Collection    
+        $ideas = Auth::user()->ideas;
 
         return view('ideas.index', [                                            // redirect to resources/ideas
             'ideas' => $ideas
@@ -45,13 +42,12 @@ class IdeaController extends Controller
         $idea = request('description');
         //dd($idea);
 
-        Idea::create([
+        Auth::user()->ideas()->create([
             'description' => $idea,
             'state' => 'pending',
-            'user_id' => auth()->id()
         ]);
 
-        return redirect('/ideas');  
+        return redirect('/ideas');
     }
 
     /**
@@ -80,8 +76,8 @@ class IdeaController extends Controller
     public function update(IdeaRequest $request, Idea $idea)
     {
         $idea->update([
-            'description' => request('description') 
-        ]); 
+            'description' => request('description')
+        ]);
         return redirect("/ideas/{$idea->id}");
     }
 
