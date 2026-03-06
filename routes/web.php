@@ -28,11 +28,15 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/register', [RegisteredUserController::class, 'create'])->middleware('guest');
     Route::post('/register', [RegisteredUserController::class, 'store'])->middleware('guest');
-    
+
     Route::get('/login', [SessionsController::class, 'create'])->name('login');
     Route::post('/login', [SessionsController::class, 'store']);
 });
 
+Route::get('/admin', function () {
+    Gate::authorize('view-admin');
+    return 'Admin Page';
+});
 
 
 
@@ -84,7 +88,7 @@ Route::middleware('guest')->group(function () {
 
 // $ideas = Idea::query()
 // ->when(request('state'), function ($query) {
-//     $query->where('state', request('state'));        
+//     $query->where('state', request('state'));
 // })->get();
 
 //     //$ideas = Idea::where('state', 'draft')->get();
@@ -117,7 +121,7 @@ Route::middleware('guest')->group(function () {
 //     //session(['ideas'=> $ideas]);
 //     // "dfgfdsg" // routes\web.php:24
 
-//     // session()->push('ideas', $ideas); 
+//     // session()->push('ideas', $ideas);
 //         // array:1 [▼ // routes\web.php:19
 //         //  0 => "sdfgsh"
 //         // ]
@@ -134,7 +138,7 @@ Route::middleware('guest')->group(function () {
 //         'state' => 'pending'
 //     ]);
 
-//     return redirect('/');   
+//     return redirect('/');
 // });
 
 // Route::get('/delete-ideas', function () {
