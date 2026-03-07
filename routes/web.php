@@ -17,7 +17,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/ideas/create', [IdeaController::class, 'create']);
     Route::post('/ideas', [IdeaController::class, 'store']);
     Route::get('/ideas/{idea}', [IdeaController::class, 'show']);
-    Route::get('/ideas/{idea}/edit', [IdeaController::class, 'edit']);
+    Route::get('/ideas/{idea}/edit', [IdeaController::class, 'edit'])->middleware('can:update,idea');
     Route::patch('/ideas/{idea}', [IdeaController::class, 'update']);
     Route::delete('/ideas/{idea}', [IdeaController::class, 'destroy']);
 
@@ -33,10 +33,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [SessionsController::class, 'store']);
 });
 
-Route::get('/admin', function () {
-    Gate::authorize('view-admin');
-    return 'Admin Page';
-});
+//Route::get('/admin', function () {
+//    Gate::authorize('view-admin');
+//    return 'Admin Page';
+//});
 
 
 
