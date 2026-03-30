@@ -8,9 +8,21 @@
         ];
 
         $statusFilter = isset($statusFilter) && is_string($statusFilter) ? $statusFilter : 'all';
+        $priorityFilter = isset($priorityFilter) && is_string($priorityFilter) ? $priorityFilter : 'all';
 
         if ($statusFilter !== 'all' && !array_key_exists($statusFilter, $columns)) {
             $statusFilter = 'all';
+        }
+
+        $priorityOptions = [
+            'all' => 'All Priorities',
+            'low' => 'Low',
+            'medium' => 'Medium',
+            'high' => 'High',
+        ];
+
+        if (!array_key_exists($priorityFilter, $priorityOptions)) {
+            $priorityFilter = 'all';
         }
 
         $filterLabel = $statusFilter === 'all' ? 'All Tasks' : ($columns[$statusFilter] ?? 'All Tasks');
@@ -26,13 +38,58 @@
             <a href="/tasks/create" class="btn btn-sm btn-primary">New Task</a>
         </div>
 
-        <div class="mt-4">
-            <div class="tabs tabs-boxed bg-base-200 inline-flex">
-                <a href="/tasks" class="tab {{ $statusFilter === 'all' ? 'tab-active' : '' }}">All</a>
-                @foreach ($columns as $statusKey => $statusLabel)
-                    <a href="/tasks?status={{ $statusKey }}" class="tab {{ $statusFilter === $statusKey ? 'tab-active' : '' }}">{{ $statusLabel }}</a>
-                @endforeach
-            </div>
+        <div class="mt-4 rounded-lg bg-base-200 p-4">
+            <form method="GET" action="/tasks" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 items-end">
+                <div class="xl:col-span-2">
+                    <label for="q" class="block text-sm font-medium mb-1">Search</label>
+                    <input
+                        id="q"
+                        name="q"
+                        type="text"
+                        value="{{ $searchTerm ?? '' }}"
+                        placeholder="Search title, description, status, priority"
+                        class="input input-bordered w-full"
+                    />
+                </div>
+
+                <div>
+                    <label for="status" class="block text-sm font-medium mb-1">Status</label>
+                    <select id="status" name="status" class="select select-bordered w-full">
+                        <option value="all" @selected($statusFilter === 'all')>All Statuses</option>
+                        @foreach ($columns as $statusKey => $statusLabel)
+                            <option value="{{ $statusKey }}" @selected($statusFilter === $statusKey)>{{ $statusLabel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="priority" class="block text-sm font-medium mb-1">Priority</label>
+                    <select id="priority" name="priority" class="select select-bordered w-full">
+                        @foreach ($priorityOptions as $priorityKey => $priorityLabel)
+                            <option value="{{ $priorityKey }}" @selected($priorityFilter === $priorityKey)>{{ $priorityLabel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="due_from" class="block text-sm font-medium mb-1">Due From</label>
+                    <input id="due_from" name="due_from" type="date" value="{{ $dueFrom ?? '' }}" class="input input-bordered w-full" />
+                </div>
+
+                <div>
+                    <label for="due_to" class="block text-sm font-medium mb-1">Due To</label>
+                    <input id="due_to" name="due_to" type="date" value="{{ $dueTo ?? '' }}" class="input input-bordered w-full" />
+                </div>
+
+                <div class="xl:col-span-6 flex gap-2 mt-1">
+                    <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                    <a href="/tasks" class="btn btn-sm btn-ghost">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="mt-3 text-sm text-gray-300">
+            Showing {{ $tasks->count() }} of {{ $tasks->total() }} tasks
         </div>
 
         <div class="mt-6 grid grid-cols-1 {{ $statusFilter === 'all' ? 'lg:grid-cols-4' : 'lg:grid-cols-1' }} gap-4">
@@ -86,6 +143,10 @@
                     </div>
                 </section>
             @endforeach
+        </div>
+
+        <div class="mt-6">
+            {{ $tasks->onEachSide(1)->links() }}
         </div>
     </div>
 </x-layout>

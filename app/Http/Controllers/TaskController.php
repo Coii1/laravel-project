@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 class TaskController extends Controller
 {
     private const STATUS_ORDER = ['backlog', 'todo', 'in_progress', 'done'];
+    private const PRIORITY_ORDER = ['low', 'medium', 'high'];
 
     /**
      * Display a listing of the resource.
@@ -19,6 +20,9 @@ class TaskController extends Controller
     {
         $this->syncOverdueTasksToBacklog();
 
+        $searchRaw = request('q', '');
+        $searchTerm = is_string($searchRaw) ? trim($searchRaw) : '';
+
         $statusFilterRaw = request('status', 'all');
         $statusFilter = is_string($statusFilterRaw) ? $statusFilterRaw : 'all';
 
@@ -26,23 +30,69 @@ class TaskController extends Controller
             $statusFilter = 'all';
         }
 
-        $tasks = Auth::user()
-            ->tasks()
+        $priorityFilterRaw = request('priority', 'all');
+        $priorityFilter = is_string($priorityFilterRaw) ? $priorityFilterRaw : 'all';
+
+        if ($priorityFilter !== 'all' && !in_array($priorityFilter, self::PRIORITY_ORDER, true)) {
+            $priorityFilter = 'all';
+        }
+
+        $dueFrom = $this->normalizeDateInput(request('due_from'));
+        $dueTo = $this->normalizeDateInput(request('due_to'));
+
+        $query = Auth::user()->tasks();
+
+        if ($searchTerm !== '') {
+            $query->where(function ($subQuery) use ($searchTerm): void {
+                $like = '%' . $searchTerm . '%';
+
+                $subQuery->where('title', 'like', $like)
+                    ->orWhere('description', 'like', $like)
+                    ->orWhere('status', 'like', $like)
+                    ->orWhere('priority', 'like', $like);
+            });
+        }
+
+        if ($statusFilter !== 'all') {
+            $query->where('status', $statusFilter);
+        }
+
+        if ($priorityFilter !== 'all') {
+            $query->where('priority', $priorityFilter);
+        }
+
+        if ($dueFrom !== null) {
+            $query->whereDate('due_date', '>=', $dueFrom);
+        }
+
+        if ($dueTo !== null) {
+            $query->whereDate('due_date', '<=', $dueTo);
+        }
+
+        $tasks = $query
             ->orderByRaw("CASE status WHEN 'backlog' THEN 1 WHEN 'todo' THEN 2 WHEN 'in_progress' THEN 3 WHEN 'done' THEN 4 ELSE 5 END")
             ->orderBy('position')
             ->orderBy('created_at')
-            ->get();
+            ->paginate(16)
+            ->withQueryString();
+
+        $pageTasks = $tasks->getCollection();
 
         $tasksByStatus = [
-            'backlog' => $tasks->where('status', 'backlog')->values(),
-            'todo' => $tasks->where('status', 'todo')->values(),
-            'in_progress' => $tasks->where('status', 'in_progress')->values(),
-            'done' => $tasks->where('status', 'done')->values(),
+            'backlog' => $pageTasks->where('status', 'backlog')->values(),
+            'todo' => $pageTasks->where('status', 'todo')->values(),
+            'in_progress' => $pageTasks->where('status', 'in_progress')->values(),
+            'done' => $pageTasks->where('status', 'done')->values(),
         ];
 
         return view('tasks.index', [
             'tasksByStatus' => $tasksByStatus,
+            'tasks' => $tasks,
+            'searchTerm' => $searchTerm,
             'statusFilter' => $statusFilter,
+            'priorityFilter' => $priorityFilter,
+            'dueFrom' => $dueFrom,
+            'dueTo' => $dueTo,
         ]);
     }
 
@@ -275,5 +325,18 @@ class TaskController extends Controller
         }
 
         return Carbon::parse($dueDate)->isBefore(now()->startOfDay());
+    }
+
+    private function normalizeDateInput(mixed $dateInput): ?string
+    {
+        if (!is_string($dateInput) || trim($dateInput) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $dateInput)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }
