@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Http\Requests\TaskRequest;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,6 +17,8 @@ class TaskController extends Controller
      */
     public function index()
     {
+        $this->syncOverdueTasksToBacklog();
+
         $statusFilterRaw = request('status', 'all');
         $statusFilter = is_string($statusFilterRaw) ? $statusFilterRaw : 'all';
 
@@ -58,7 +61,7 @@ class TaskController extends Controller
     {
         $validated = $request->validated();
 
-        $validated['position'] = $this->nextPosition($validated['status']);
+        $validated = $this->applyAutomaticBacklogRules($validated);
 
         Auth::user()->tasks()->create($validated);
 
@@ -98,9 +101,7 @@ class TaskController extends Controller
 
         $validated = $request->validated();
 
-        if ($task->status !== $validated['status']) {
-            $validated['position'] = $this->nextPosition($validated['status']);
-        }
+        $validated = $this->applyAutomaticBacklogRules($validated, $task);
 
         $task->update($validated);
 
@@ -173,5 +174,58 @@ class TaskController extends Controller
             ->max('position');
 
         return $maxPosition === null ? 0 : $maxPosition + 1;
+    }
+
+    private function applyAutomaticBacklogRules(array $validated, ?Task $existingTask = null): array
+    {
+        $status = $validated['status'];
+        $originalStatus = $existingTask?->status;
+
+        if ($this->isPastDue($validated['due_date']) && $status !== 'done') {
+            $status = 'backlog';
+            $validated['status'] = $status;
+        }
+
+        if ($originalStatus !== $status) {
+            $validated['position'] = $this->nextPosition($status);
+        }
+
+        return $validated;
+    }
+
+    private function syncOverdueTasksToBacklog(): void
+    {
+        $overdueTasks = Auth::user()
+            ->tasks()
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<', now()->toDateString())
+            ->whereNotIn('status', ['backlog', 'done'])
+            ->orderBy('due_date')
+            ->orderBy('position')
+            ->get();
+
+        if ($overdueTasks->isEmpty()) {
+            return;
+        }
+
+        $nextBacklogPosition = $this->nextPosition('backlog');
+
+        foreach ($overdueTasks as $task) {
+            $task->update([
+                'status' => 'backlog',
+                'position' => $nextBacklogPosition,
+            ]);
+
+            $nextBacklogPosition++;
+        }
+    }
+
+    private function isPastDue(?string $dueDate): bool
+    {
+        if ($dueDate === null || $dueDate === '') {
+            return false;
+        }
+
+        return Carbon::parse($dueDate)->isBefore(now()->startOfDay());
     }
 }
