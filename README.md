@@ -1,59 +1,180 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Task Manager (Laravel)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Application Description and Purpose
+This project is a Task Manager web application built with Laravel.
 
-## About Laravel
+The main purpose is to manage personal tasks in a board-style workflow inspired by tools like Trello, with practical productivity features such as:
+1. Multi-status task tracking (Backlog, To Do, In Progress, Done)
+2. Search, filtering, and pagination
+3. Automatic backlog handling for overdue tasks
+4. Archive flow (soft delete, restore, permanent delete)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The app is designed for authenticated users, and each user can only manage their own tasks.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
+1. Laravel 12 (PHP 8.2+)
+2. Blade templates
+3. Tailwind CSS + DaisyUI
+4. PostgreSQL (recommended for this setup guide)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features Implemented
+1. Authentication (register, login, logout)
+2. Task CRUD (create, read, update, archive)
+3. Task fields:
+title, description, due_date, status, priority, position
+4. Board view with status columns:
+Backlog, To Do, In Progress, Done
+5. Left/Right status movement on cards
+6. Automatic overdue logic:
+past-due tasks are automatically moved to Backlog (except Done)
+7. Search across multiple fields:
+title, description, status, priority
+8. Filters:
+status, priority, due date range
+9. Pagination with query-string persistence
+10. Soft delete archive flow:
+archive, restore, permanent delete
 
-## Learning Laravel
+## Installation and Setup Instructions
+1. Clone the repository.
+2. Go into the project directory.
+3. Install PHP dependencies:
+```bash
+composer install
+```
+4. Install frontend dependencies:
+```bash
+npm install
+```
+5. Create environment file:
+```bash
+cp .env.example .env
+```
+6. Generate app key:
+```bash
+php artisan key:generate
+```
+7. Configure your database in `.env` (see PostgreSQL section below).
+8. Run migrations:
+```bash
+php artisan migrate
+```
+9. Seed sample data:
+```bash
+php artisan db:seed
+```
+10. Run the app:
+```bash
+composer run dev
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Database Setup Guide (PostgreSQL)
+### 1) Create PostgreSQL database
+Use `psql` and run:
+```sql
+CREATE DATABASE task_manager;
+CREATE USER task_user WITH PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE task_manager TO task_user;
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 2) Configure `.env`
+Set these values:
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=task_manager
+DB_USERNAME=task_user
+DB_PASSWORD=your_secure_password
+```
 
-## Laravel Sponsors
+### 3) Run migrations and seeders
+```bash
+php artisan migrate
+php artisan db:seed
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Common Laravel Commands
+1. Run migrations:
+```bash
+php artisan migrate
+```
+2. Refresh database and reseed:
+```bash
+php artisan migrate:fresh --seed
+```
+3. Run tests:
+```bash
+php artisan test
+```
 
-### Premium Partners
+## Screenshots
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1. Task board view
+![Task Board](docs/screenshots/task-board.png)
 
-## Contributing
+2. Search and filters
+![Search and Filters](docs/screenshots/search-and-filters.png)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. Archived tasks page
+![Archived Tasks](docs/screenshots/archived-tasks.png)
 
-## Code of Conduct
+## MVC Architecture Explanation
+This project follows Laravel MVC with clear separation of concerns.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Model Layer (`app/Models`)
+```text
+app/Models/
+|- User.php                  # Authentication user model; owns many tasks
+|- Task.php                  # Main domain model (task fields, casts, soft deletes)
+```
 
-## Security Vulnerabilities
+### Controller Layer (`app/Http/Controllers`)
+```text
+app/Http/Controllers/
+|- TaskController.php        # Task business flow (board, CRUD, move, search/filter, archive lifecycle)
+|- Auth/
+|  |- RegisteredUserController.php  # Registration flow
+|  |- SessionsController.php        # Login/logout flow
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Request Validation Layer (`app/Http/Requests`)
+```text
+app/Http/Requests/
+|- TaskRequest.php           # Input validation for create/update task operations
+```
 
-## License
+### View Layer (`resources/views`)
+```text
+resources/views/
+|- components/
+|  |- layout.blade.php       # Shared layout shell
+|  |- nav.blade.php          # Main nav links
+|  |- task-card.blade.php    # Reusable task card component
+|- tasks/
+|  |- index.blade.php        # Task board + search/filter UI + pagination
+|  |- create.blade.php       # Task creation form
+|  |- edit.blade.php         # Task update form + archive action
+|  |- show.blade.php         # Single task details
+|  |- archived.blade.php     # Archived tasks (restore/permanent delete)
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Routing Layer (`routes`)
+```text
+routes/
+|- web.php                   # HTTP endpoints for auth and task flows
+```
+
+### Database Layer (`database`)
+```text
+database/
+|- migrations/               # Schema evolution (tasks table, status fields, soft deletes)
+|- seeders/
+|  |- DatabaseSeeder.php     # Root seeder entrypoint
+|  |- TaskSeeder.php         # Realistic task seed data for testing search/filter/archive
+```
+
+## Notes
+1. All task actions are user-scoped; users can only access their own tasks.
+2. Archive uses soft deletes so records are recoverable.
+3. Permanent delete is available from the Archived page.
