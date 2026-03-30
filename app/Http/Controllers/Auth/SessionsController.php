@@ -33,7 +33,7 @@ class SessionsController extends Controller
 
         if(Auth::attempt($validated)) {
             $request->session()->regenerate();  // ensure every time you sign in, you get a new session id to prevent session fixation attacks
-            return redirect('/ideas');
+            return redirect('/tasks');
         }
 
         return back()->withErrors([
@@ -49,6 +49,6 @@ class SessionsController extends Controller
     public function destroy()
     {
         Auth::logout();
-        return redirect('/ideas');
+        return redirect('/tasks');
     }
 }

@@ -34,7 +34,7 @@ class RegisteredUserController extends Controller
         //login the user after registration 
         Auth::login($user);
 
-        // Redirect to login or dashboard after registration
-        return redirect('/ideas');
+        // Redirect to tasks after registration
+        return redirect('/tasks');
     }
 }

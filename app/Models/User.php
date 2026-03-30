@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Task;
 
 class User extends Authenticatable
 {
@@ -47,13 +48,13 @@ class User extends Authenticatable
         ];
     }
 
-    //$user -> ideas
-    public function ideas(): HasMany
+    public function tasks(): HasMany
     {
-        return $this->hasMany(Idea::class);
+        return $this->hasMany(Task::class);
     }
 
-    public function isAdmin(): bool{
+    public function isAdmin(): bool
+    {
         return $this->id === 1; //only user 1 is admin
     }
 
