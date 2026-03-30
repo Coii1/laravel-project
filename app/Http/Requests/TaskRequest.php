@@ -25,7 +25,7 @@ class TaskRequest extends FormRequest
             'title' => ['required', 'string', 'min:3', 'max:120'],
             'description' => ['required', 'string', 'min:6', 'max:2000'],
             'due_date' => ['nullable', 'date'],
-            'status' => ['required', 'in:todo,in_progress,done'],
+            'status' => ['required', 'in:backlog,todo,in_progress,done'],
             'priority' => ['required', 'in:low,medium,high'],
             'position' => ['nullable', 'integer', 'min:0'],
         ];
@@ -36,7 +36,7 @@ class TaskRequest extends FormRequest
         return [
             'title.required' => 'Task title is required.',
             'description.required' => 'Task description is required.',
-            'status.in' => 'Status must be todo, in progress, or done.',
+            'status.in' => 'Status must be backlog, todo, in progress, or done.',
             'priority.in' => 'Priority must be low, medium, or high.',
         ];
     }

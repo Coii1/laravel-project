@@ -35,7 +35,8 @@
                 <label for="status" class="block text-sm/6 font-medium text-white">Status</label>
                 <div class="mt-2">
                     <select id="status" name="status" class="select select-bordered w-full @error('status') select-error @enderror">
-                        <option value="todo" @selected(old('status', 'todo') === 'todo')>To Do</option>
+                        <option value="backlog" @selected(old('status', 'backlog') === 'backlog')>Backlog</option>
+                        <option value="todo" @selected(old('status') === 'todo')>To Do</option>
                         <option value="in_progress" @selected(old('status') === 'in_progress')>In Progress</option>
                         <option value="done" @selected(old('status') === 'done')>Done</option>
                     </select>

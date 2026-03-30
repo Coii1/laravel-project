@@ -16,6 +16,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/tasks/{task}', [TaskController::class, 'show']);
     Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->middleware('can:update,task');
     Route::patch('/tasks/{task}', [TaskController::class, 'update']);
+    Route::patch('/tasks/{task}/move-left', [TaskController::class, 'moveLeft'])->middleware('can:update,task');
+    Route::patch('/tasks/{task}/move-right', [TaskController::class, 'moveRight'])->middleware('can:update,task');
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
 
     Route::delete('/logout', [SessionsController::class, 'destroy']);

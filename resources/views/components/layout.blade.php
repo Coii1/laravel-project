@@ -1,5 +1,6 @@
 @props([
-    'title' => 'sample title'
+    'title' => 'sample title',
+    'mainClass' => 'max-w-3xl mx-auto mt-6',
 ])
 
 <!DOCTYPE html>
@@ -14,7 +15,7 @@
 </head>
 <body class = "">
     <x-nav/>
-    <main class="max-w-3xl mx-auto mt-6">
+    <main class="{{ $mainClass }}">
         {{ $slot }}
     </main>
 </body>

@@ -1,4 +1,4 @@
-<a {{ $attributes->merge(['class' => 'card bg-neutral text-neutral-content w-96']) }}>
+<a {{ $attributes->merge(['class' => 'card bg-neutral text-neutral-content w-full']) }}>
     <div class="card-body">
         <!-- <h2 class="card-title"></h2> -->
         <p>{{ $slot }}</p>
