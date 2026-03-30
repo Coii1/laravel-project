@@ -40,10 +40,10 @@ class TaskController extends Controller
         $dueFrom = $this->normalizeDateInput(request('due_from'));
         $dueTo = $this->normalizeDateInput(request('due_to'));
 
-        $query = Auth::user()->tasks();
+        $baseQuery = Auth::user()->tasks();
 
         if ($searchTerm !== '') {
-            $query->where(function ($subQuery) use ($searchTerm): void {
+            $baseQuery->where(function ($subQuery) use ($searchTerm): void {
                 $like = '%' . $searchTerm . '%';
 
                 $subQuery->where('title', 'like', $like)
@@ -54,40 +54,56 @@ class TaskController extends Controller
         }
 
         if ($statusFilter !== 'all') {
-            $query->where('status', $statusFilter);
+            $baseQuery->where('status', $statusFilter);
         }
 
         if ($priorityFilter !== 'all') {
-            $query->where('priority', $priorityFilter);
+            $baseQuery->where('priority', $priorityFilter);
         }
 
         if ($dueFrom !== null) {
-            $query->whereDate('due_date', '>=', $dueFrom);
+            $baseQuery->whereDate('due_date', '>=', $dueFrom);
         }
 
         if ($dueTo !== null) {
-            $query->whereDate('due_date', '<=', $dueTo);
+            $baseQuery->whereDate('due_date', '<=', $dueTo);
         }
 
-        $tasks = $query
-            ->orderByRaw("CASE status WHEN 'backlog' THEN 1 WHEN 'todo' THEN 2 WHEN 'in_progress' THEN 3 WHEN 'done' THEN 4 ELSE 5 END")
-            ->orderBy('position')
-            ->orderBy('created_at')
-            ->paginate(16)
-            ->withQueryString();
-
-        $pageTasks = $tasks->getCollection();
-
         $tasksByStatus = [
-            'backlog' => $pageTasks->where('status', 'backlog')->values(),
-            'todo' => $pageTasks->where('status', 'todo')->values(),
-            'in_progress' => $pageTasks->where('status', 'in_progress')->values(),
-            'done' => $pageTasks->where('status', 'done')->values(),
+            'backlog' => collect(),
+            'todo' => collect(),
+            'in_progress' => collect(),
+            'done' => collect(),
         ];
+
+        $paginatorsByStatus = [];
+
+        if ($statusFilter === 'all') {
+            foreach (self::STATUS_ORDER as $status) {
+                $columnPaginator = (clone $baseQuery)
+                    ->where('status', $status)
+                    ->orderBy('position')
+                    ->orderBy('created_at')
+                    ->paginate(6, ['*'], $status . '_page')
+                    ->withQueryString();
+
+                $paginatorsByStatus[$status] = $columnPaginator;
+                $tasksByStatus[$status] = $columnPaginator->getCollection()->values();
+            }
+        } else {
+            $singlePaginator = (clone $baseQuery)
+                ->orderBy('position')
+                ->orderBy('created_at')
+                ->paginate(12)
+                ->withQueryString();
+
+            $paginatorsByStatus[$statusFilter] = $singlePaginator;
+            $tasksByStatus[$statusFilter] = $singlePaginator->getCollection()->values();
+        }
 
         return view('tasks.index', [
             'tasksByStatus' => $tasksByStatus,
-            'tasks' => $tasks,
+            'paginatorsByStatus' => $paginatorsByStatus,
             'searchTerm' => $searchTerm,
             'statusFilter' => $statusFilter,
             'priorityFilter' => $priorityFilter,

@@ -25,8 +25,18 @@
             $priorityFilter = 'all';
         }
 
+        $paginatorsByStatus = $paginatorsByStatus ?? [];
+
         $filterLabel = $statusFilter === 'all' ? 'All Tasks' : ($columns[$statusFilter] ?? 'All Tasks');
         $visibleColumns = $statusFilter === 'all' ? $columns : [$statusFilter => ($columns[$statusFilter] ?? 'Tasks')];
+
+        $visiblePageCount = 0;
+        $visibleTotalCount = 0;
+
+        foreach ($visibleColumns as $statusKey => $statusLabel) {
+            $visiblePageCount += ($tasksByStatus[$statusKey] ?? collect())->count();
+            $visibleTotalCount += ($paginatorsByStatus[$statusKey]->total() ?? 0);
+        }
     @endphp
 
     <div class="mt-6 text-white">
@@ -89,19 +99,20 @@
         </div>
 
         <div class="mt-3 text-sm text-gray-300">
-            Showing {{ $tasks->count() }} of {{ $tasks->total() }} tasks
+            Showing {{ $visiblePageCount }} of {{ $visibleTotalCount }} tasks
         </div>
 
         <div class="mt-6 grid grid-cols-1 {{ $statusFilter === 'all' ? 'lg:grid-cols-4' : 'lg:grid-cols-1' }} gap-4">
             @foreach ($visibleColumns as $statusKey => $statusLabel)
                 @php
                     $columnTasks = $tasksByStatus[$statusKey] ?? collect();
+                    $columnPaginator = $paginatorsByStatus[$statusKey] ?? null;
                 @endphp
 
                 <section class="rounded-lg bg-base-200 p-4">
                     <div class="flex items-center justify-between">
                         <h3 class="font-semibold">{{ $statusLabel }}</h3>
-                        <span class="badge badge-outline">{{ $columnTasks->count() }}</span>
+                        <span class="badge badge-outline">{{ $columnPaginator?->total() ?? $columnTasks->count() }}</span>
                     </div>
 
                     <div class="mt-4 space-y-3">
@@ -141,12 +152,14 @@
                             </div>
                         @endforelse
                     </div>
+
+                    @if ($columnPaginator && $columnPaginator->hasPages())
+                        <div class="mt-4">
+                            {{ $columnPaginator->onEachSide(1)->links() }}
+                        </div>
+                    @endif
                 </section>
             @endforeach
-        </div>
-
-        <div class="mt-6">
-            {{ $tasks->onEachSide(1)->links() }}
         </div>
     </div>
 </x-layout>
